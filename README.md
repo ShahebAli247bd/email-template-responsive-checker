@@ -1,0 +1,1 @@
+# email-template-responsive-checker

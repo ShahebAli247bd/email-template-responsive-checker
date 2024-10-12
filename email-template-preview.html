@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Template Viewer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+      height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 40px;
+      flex-direction: column;
+    }
+
+    .container {
+      max-width: 600px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+		margin: 0 auto;
+    }
+
+    h1 {
+      color: #4A90E2;
+      margin-bottom: 20px;
+    }
+
+    .uploader {
+      border: 2px dashed #4A90E2;
+      border-radius: 8px;
+      padding: 30px;
+      cursor: pointer;
+      transition: background 0.3s;
+      position: relative;
+    }
+
+    .uploader:hover {
+      background-color: #f0f8ff;
+    }
+
+    .upload-label {
+      cursor: pointer;
+      display: block;
+    }
+
+    .upload-icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+
+    .preview {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fafafa;
+      min-height: 100px;
+    }
+
+    .dragover {
+      background-color: #e0f7fa;
+      border-color: #00796b;
+    }
+
+    #preview {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr); /* 4 items per row */
+      grid-gap: 20px;
+      margin-top: 20px;
+    }
+
+    .email-client {
+      border: 1px solid #ccc;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Specific device previews with uniform heights */
+    .preview-desktop,
+    .preview-tablet,
+    .preview-medium-mobile,
+    .preview-small-mobile {
+      width: 100%;
+      height: 100%; /* Enforces consistent sizing */
+    }
+
+    .email-preview-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-gap: 20px;
+      align-items: stretch;
+    }
+
+    .device-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100%;
+    }
+
+    .device-label {
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    /* Ensure the iframe heights are consistent */
+    .preview-desktop {
+      width: 700px;
+      height: 100vh; /* Adjust based on desired desktop height */
+    }
+
+    .preview-tablet {
+      width: 599px;
+      height: 100vh;
+    }
+
+    .preview-medium-mobile {
+      width: 475px;
+      height: 100vh;
+    }
+
+    .preview-small-mobile {
+      width: 320px;
+      height: 100vh;
+    }
+
+    @media (max-width: 1200px) {
+      #preview {
+        grid-template-columns: repeat(2, 1fr); /* 2 columns for smaller screens */
+      }
+    }
+
+    @media (max-width: 768px) {
+      #preview {
+        grid-template-columns: repeat(1, 1fr); /* 1 column for very small screens */
+      }
+    }
+
+    .fluid-container {
+      padding: 20px;
+		margin: 0 auto;
+
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Email Template Responsiveness Checker</h1>
+    <div id="uploader" class="uploader">
+      <input type="file" id="fileInput" accept=".zip" hidden>
+      <label for="fileInput" class="upload-label">
+        <div class="upload-icon">📤</div>
+        <p>Upload your .zip <strong>Email Template</strong> here to upload</p>
+      </label>
+    </div>
+  </div>
+
+  <div class="fluid-container">
+    <div id="preview" class="preview"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.0/jszip.min.js"></script>
+  <script>
+    document.getElementById('fileInput').addEventListener('change', function () {
+      var file = this.files[0];
+      var reader = new FileReader();
+
+      reader.onload = function (event) {
+        var zip = new JSZip();
+        zip.loadAsync(event.target.result).then(function (zip) {
+          var htmlFiles = [];
+          var images = {};
+
+          zip.forEach(function (relativePath, zipEntry) {
+            if (zipEntry.name.endsWith('.html')) {
+              htmlFiles.push(zipEntry.name);
+            } else if (/\.(png|jpe?g|gif|svg)$/i.test(zipEntry.name)) {
+              images[zipEntry.name] = zipEntry;
+            }
+          });
+
+          var previewContainer = document.getElementById('preview');
+          previewContainer.innerHTML = '';
+
+          var imagePromises = Object.keys(images).map(function (imageName) {
+            return images[imageName].async('base64').then(function (base64) {
+              images[imageName].base64 = base64;
+            });
+          });
+
+          Promise.all(imagePromises).then(function () {
+            htmlFiles.forEach(function (htmlFileName) {
+              zip.file(htmlFileName).async('string').then(function (data) {
+                Object.keys(images).forEach(function (imageName) {
+                  var imgRegex = new RegExp(imageName, 'g');
+                  var base64Data = 'data:image/' + getImageType(imageName) + ';base64,' + images[imageName].base64;
+                  data = data.replace(imgRegex, base64Data);
+                });
+
+                var emailClientDiv = document.createElement('div');
+                emailClientDiv.className = 'email-preview-container';
+
+                emailClientDiv.appendChild(createDevicePreview('Desktop', data, 'preview-desktop'));
+                emailClientDiv.appendChild(createDevicePreview('Tablet', data, 'preview-tablet'));
+                emailClientDiv.appendChild(createDevicePreview('Mobile', data, 'preview-medium-mobile'));
+                emailClientDiv.appendChild(createDevicePreview('Small Mobile', data, 'preview-small-mobile'));
+
+                previewContainer.appendChild(emailClientDiv);
+              });
+            });
+          });
+
+          function createDevicePreview(deviceName, content, className) {
+            var deviceDiv = document.createElement('div');
+            deviceDiv.className = 'device-container';
+
+            var deviceLabel = document.createElement('div');
+            deviceLabel.className = 'device-label';
+            deviceLabel.innerText = deviceName;
+
+            var previewIframe = document.createElement('iframe');
+            previewIframe.className = className;
+            previewIframe.srcdoc = content;
+
+            deviceDiv.appendChild(deviceLabel);
+            deviceDiv.appendChild(previewIframe);
+
+            return deviceDiv;
+          }
+
+          function getImageType(fileName) {
+            var ext = fileName.split('.').pop().toLowerCase();
+            return ext === 'jpg' ? 'jpeg' : ext;
+          }
+        });
+      };
+
+      reader.readAsArrayBuffer(file);
+    });
+  </script>
+  
+</body>
+</html>

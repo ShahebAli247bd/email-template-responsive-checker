@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Email Template Viewer</title>
+ <style>
+  body {
+   font-family: Arial, sans-serif;
+  }
+
+  #uploader {
+   margin-bottom: 20px;
+  }
+ </style>
+</head>
+
+<body>
+ <!-- <h1>Email Template Viewer</h1>
+ <div id="uploader">
+  <input type="file" id="fileInput" accept=".zip">
+ </div> -->
+
+ <div class="container">
+  <h1>Email Template Viewer</h1>
+  <div id="uploader" class="uploader">
+   <input type="file" id="fileInput" accept=".zip" hidden>
+   <label for="fileInput" class="upload-label">
+    <div class="upload-icon">📤</div>
+    <p>Drag & drop your .zip file here or click to upload</p>
+   </label>
+  </div>
+  <div id="preview" class="preview"></div>
+ </div>
+
+
+
+ <!-- Remove inline script -->
+ <script src="popup.js"></script> <!-- Include external JavaScript file -->
+ <script src="jszip.min.js"></script> <!-- Include JSZip as an external file in the extension -->
+</body>
+
+</html>
